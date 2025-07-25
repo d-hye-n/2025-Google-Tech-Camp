@@ -1,0 +1,90 @@
+* Cloud run – gcloud shell
+
+-----------[main.py]------------
+import os
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return "Hello from Cloud Run!"
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+
+
+-----[Dockerfile]-----
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "main.py"]
+
+
+
+-----[requirements.txt]-----
+flask
+
+
+
+
+
+* cloud run
+------------[ DataSet 생성] ---------------
+-- Dataset table 생성
+CREATE TABLE demo_dataset.users (
+  user_id STRING,
+  name STRING,
+  age INT64
+);
+
+-- 데이터 입력
+INSERT INTO demo_dataset.users (user_id, name, age)
+VALUES (‘u001’, ‘Alice’, 25), (‘u002’, ‘Bob’, 30), (‘u003’, ‘Carol’, 22);
+
+-- 데이터 조회 확인
+SELECT user_id, name, age
+    FROM `gcp-study-463918.demo_dataset.users`
+    WHERE age >= 20;
+
+----------------------------------------------------
+
+
+
+------[requirements.txt]------
+functions-framework==3.5.0
+google-cloud-bigquery
+pandas
+db-dtypes
+------------------------------
+
+
+------[main.py]------
+import pandas as pd
+from google.cloud import bigquery
+from flask import jsonify, Request
+
+bq_client = bigquery.Client()
+
+def query_users(request: Request):
+    age_param = request.args.get("age", default=20, type=int)
+
+    query = """
+        SELECT user_id, name, age
+        FROM `gcp-study-463918.demo_dataset.users`
+        WHERE age >= @age_param
+    """
+
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("age_param", "INT64", age_param)
+        ]
+    )
+
+    df = bq_client.query(query, job_config=job_config).to_dataframe()
+    df["name"] = df["name"].str.upper()
+
+    return jsonify(df.to_dict(orient="records"))
+----------------------------------------------------------------------

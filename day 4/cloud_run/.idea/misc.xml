@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.11 (cloud_run)" />
+  </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="ca639173-ad4a-4b2e-b1be-d252b31d58c6" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (cloud_run)" project-jdk-type="Python SDK" />
+</project>
