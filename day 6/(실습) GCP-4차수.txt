@@ -1,0 +1,35 @@
+# git 설치
+sudo apt update
+sudo apt install git
+
+
+# echo-server 설치
+## echo-server git code 받아오기
+git clone https://github.com/hyeonjun-commit/echo-server.git
+
+# echo-server 설치
+cd echo-server
+sudo sh startup.sh
+
+# echo-server 실행
+source .venv/bin/activate
+uvicorn server:app --host 0.0.0.0 --port 8000
+
+
+# 테스트 및 확인
+## local test
+curl -XGET localhost:8000/ping
+curl -XGET localhost:8000/healthz
+curl -XGET localhost:8000/info
+ 
+## web url 확인
+http://35.216.72.219:8000/ping
+http://35.216.72.219:8000/healthz
+http://35.216.72.219:8000/info
+
+
+[답안제출 ppt 파일이름 형식]
+{이름}_{학번}_6주차과제.pptx
+
+
+
