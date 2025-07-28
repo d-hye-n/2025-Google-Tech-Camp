@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    type: Recreate # .spec.strategy.type을 Recreate로 지정
+  minReadySeconds: 10 
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: demo-container
+          image: nginx:latest

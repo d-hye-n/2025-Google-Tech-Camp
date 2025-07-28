@@ -1,0 +1,29 @@
+# vpa-demo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-demo
+  template:
+    metadata:
+      labels:
+        app: vpa-demo
+    spec:
+      containers:
+      - name: stress-container
+        image: vish/stress
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+        args:
+        - -cpus
+        - "2"
+

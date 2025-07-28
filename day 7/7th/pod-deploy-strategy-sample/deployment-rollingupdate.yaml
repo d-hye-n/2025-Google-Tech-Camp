@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+# .spec.strategy.type을 RollingUpdate로 지정 생략시 기본값으로 RollingUpdate로 지정됨
+    type: RollingUpdate 
+    rollingUpdate:
+      maxSurge: 3 
+      maxUnavailable: 2
+# Pod의 Status가 Ready가 될때까지의 최소대기시간, Pod의 변화를 관찰하기위해 지정해줌
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: demo-container
+          image: httpd:latest
+            #          image: nginx:latest
+            #

@@ -1,0 +1,94 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"autoscaling.k8s.io/v1","kind":"VerticalPodAutoscaler","metadata":{"annotations":{},"name":"vpa-demo","namespace":"default"},"spec":{"resourcePolicy":{"containerPolicies":[{"containerName":"*","controlledResources":["cpu","memory"],"maxAllowed":{},"minAllowed":{},"mode":"Auto"}]},"targetRef":{"apiVersion":"apps/v1","kind":"Deployment","name":"vpa-demo"},"updatePolicy":{"updateMode":"Auto"}}}
+  creationTimestamp: '2025-07-19T11:46:22Z'
+  generation: 472
+  managedFields:
+    - apiVersion: autoscaling.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:resourcePolicy': {}
+          'f:targetRef':
+            .: {}
+            'f:apiVersion': {}
+            'f:kind': {}
+            'f:name': {}
+          'f:updatePolicy':
+            .: {}
+            'f:updateMode': {}
+      manager: unknown
+      operation: Update
+      time: '2025-07-20T08:25:02Z'
+    - apiVersion: autoscaling.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+        'f:spec':
+          'f:resourcePolicy':
+            'f:containerPolicies': {}
+      manager: kubectl-client-side-apply
+      operation: Update
+      time: '2025-07-20T08:26:39Z'
+    - apiVersion: autoscaling.k8s.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:status':
+          .: {}
+          'f:conditions': {}
+          'f:recommendation':
+            .: {}
+            'f:containerRecommendations': {}
+      manager: vpa-recommender
+      operation: Update
+      time: '2025-07-20T08:27:18Z'
+  name: vpa-demo
+  namespace: default
+  resourceVersion: '1753000038906751015'
+  uid: 6e2cd379-3058-405b-ab3f-5b423ea1396e
+spec:
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        controlledResources:
+          - cpu
+          - memory
+        maxAllowed: {}
+        minAllowed: {}
+        mode: Auto
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vpa-demo
+  updatePolicy:
+    updateMode: Auto
+status:
+  conditions:
+    - lastTransitionTime: '2025-07-20T07:55:18Z'
+      status: 'False'
+      type: LowConfidence
+    - lastTransitionTime: '2025-07-19T11:47:17Z'
+      status: 'True'
+      type: RecommendationProvided
+  recommendation:
+    containerRecommendations:
+      - containerName: stress-container
+        lowerBound:
+          cpu: 955m
+          memory: '1048576'
+        target:
+          cpu: 1085m
+          memory: '2097152'
+        uncappedTarget:
+          cpu: 1085m
+          memory: '2097152'
+        upperBound:
+          cpu: 71915m
+          memory: '76546048'

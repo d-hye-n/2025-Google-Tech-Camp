@@ -1,0 +1,297 @@
+========= <gcloud shell> ============
+$ gcloud projects list
+$ gcloud config set project gcp-study-463918
+$ gcloud container clusters get-credentials gcp-edu-gke-standard-1 --zone asia-northeast3-c --project gcp-study-463918  && kubectl get deployment hello-world-app -o yaml
+
+
+
+=== GKE 앱 배포 ===
+
+* 이미지 경로 :
+us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+* 포트 1 : 80
+* 대상포트 1 : 8080
+* 프로토콜 1 : TCP
+* 서비스 유형 : 부하 분산기
+
+
+========= <gcloud shell> ============
+------[deployment.yml]-----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: demo-container
+          image: nginx:latest
+---
+
+# 해당 파일 배포
+$ kubectl apply -f deployment.yml
+
+# deploy 상태 확인
+$ kubectl get deploy
+
+# replicaset 상태 확인
+$ kubectl get replicaset
+
+# pod 상태 확인
+$ kubectl get pod
+
+# 생성 클러스터 리스트 보기
+$ gcloud container clusters list
+
+# 현재 사용(요청) 중인 클러스터 확인
+$ kubectl config current-context
+
+# 사용 클러스터 설정
+$ gcloud container clusters get-credentials test-cluster --region us-central1-a
+$ gcloud container clusters get-credentials autopilot-cluster-1 --region asia-northeast3
+$ gcloud container clusters get-credentials gcp-edu-gke-standard-1 --region asia-northeast3-c
+
+
+$ kubectl config current-context
+
+# deployment 삭제
+$ kubectl delete deployments demo-deployment
+
+
+------[deployment-rollingUpdate.yml]-----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+# .spec.strategy.type을 RollingUpdate로 지정 생략시 기본값으로 RollingUpdate로 지정됨
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
+      maxUnavailable: 2
+# Pod의 Status가 Ready가 될때까지의 최소대기시간, Pod의 변화를 관찰하기위해 지정해줌
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: demo-container
+          image: nginx:latest
+---
+
+$ while true;do kubectl describe rs | grep Replicas && kubectl describe rs | grep "Pods Status" && kubectl get deploy; sleep 1; done
+
+------[deployment-rollingUpdate.yml]-----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    type: Recreate # .spec.strategy.type을 Recreate로 지정
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: demo-container
+          image: nginx:latest
+---
+
+# HPA 실습
+
+------[deployment-php-apache.yml]-----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+spec:
+  selector:
+    matchLabels:
+      run: php-apache
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: k8s.gcr.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+---
+
+$ kubectl expose deployment php-apache --port=8080 --target-port=80 --type=LoadBalancer
+
+$ kubectl get hpa
+
+------[hpa-php-apache.yml]-----
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+ name: php-apache
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+   name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+---
+
+
+
+------[vpa-demo-deployment.yaml]-----
+# vpa-demo-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpa-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vpa-demo
+  template:
+    metadata:
+      labels:
+        app: vpa-demo
+    spec:
+      containers:
+      - name: stress-container
+        image: vish/stress
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+        args:
+        - -cpus
+        - "2"
+---
+
+$ kubectl apply -f vpa-demo-deployment.yaml
+
+
+------[vpa-deployment.yaml]-----
+# vpa-deployment.yaml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: vpa-demo
+  namespace: default
+  clusterName: gcp-edu-gke-standard-1
+spec:
+  targetRef:
+    kind: Deployment
+    name: vpa-demo
+    apiVersion: apps/v1
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        mode: Auto
+        controlledResources:
+          - cpu
+          - memory
+        minAllowed: {}
+        maxAllowed: {}
+---
+
+kubectl apply -f vpa-crd.yaml => vpa 기능이 없을경우
+----------------[vpa-crd.yaml]----------------
+# vpa-crd.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: verticalpodautoscalers.autoscaling.k8s.io
+spec:
+  group: autoscaling.k8s.io
+  names:
+    kind: VerticalPodAutoscaler
+    listKind: VerticalPodAutoscalerList
+    plural: verticalpodautoscalers
+    singular: verticalpodautoscaler
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+---------------------------
+
+$ kubectl describe vpa vpa-demo
+
+
+
+
+
+
+[CI/CD]
+# ssh key 생성
+$ ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# github 연동 확인
+$ ssh -T git@github.com
+
+
+# git 설정
+$ git init
+$ git config --global user.name "사용자이름"
+$ git config --global user.email "이메일주소"
+
+# git 설정 확인
+$ git config --list
+
+
+
+
+[kube 클러스터 생성]
+
+$ gcloud container clusters create demo-cluster --num-nodes=2 --region=us-central1-a --machine-type=e2-medium --disk-type=pd-standard --disk-size=100
+
+
+
+
+
+[Docker 빌드]
+# 빌드
+$ docker build -t gcr.io/[PROJECT_ID]/demo-app:v1 .
+
+# GCR Push
+$ docker push gcr.io/[PROJECT_ID]/demo-app:v1
+
+
